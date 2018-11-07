@@ -1,0 +1,57 @@
+---
+title: "p8105_hw5_kb2977"
+author: "Francois Ban"
+date: "11/3/2018"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(rvest)
+library(readr)
+library(ggridges)
+library(purrr)
+```
+
+##Problem 1
+
+Create a tidy dataframe containing data from all participants, including the subject ID, arm, and observations over time:
+
+Start with a dataframe containing all file names; the list.files function will help
+Iterate over file names and read in data for each subject using purrr::map and saving the result as a new variable in the dataframe
+
+Tidy the result; manipulate file names to include control arm and subject ID, make sure weekly observations are “tidy”, and do any other tidying that’s necessary
+
+```{r patient_data_df}
+patient_data_df = 
+  data_frame(patient_id = list.files(path = "./data"),
+            csv_file = str_c(path = "./data/", patient_id)) %>% 
+  mutate(new_var = map(csv_file, read_csv)) %>% 
+  unnest() %>% 
+  janitor::clean_names() %>% 
+  gather(key = week, value = obs, week_1:week_8) %>% 
+  separate(week, into = c("remove_1", "week"), sep = "_") %>% 
+  separate(patient_id, into = c("arm", "patient_id"), sep = "_") %>%
+  separate(patient_id, into = c("patient_id", "remove_2"), sep = ".c") %>% 
+  mutate(patient_id = str_c(arm, patient_id, sep = "_")) %>% 
+  select(-remove_1, -remove_2, -csv_file)
+```
+
+Make a spaghetti plot showing observations on each subject over time, and comment on differences between groups.
+
+```{r plot_data}
+
+plot = patient_data_df %>% 
+  ggplot(aes(x = week, y = obs, group = patient_id, color = arm)) +
+  geom_line() +
+  labs(title = "Observations over Time for Each Subject",
+       x = "Time in Weeks",
+       y = "Observations") + 
+  viridis::scale_color_viridis(name = "Study Arm", discrete = TRUE)
+plot
+
+```
+
+##Problem 2
