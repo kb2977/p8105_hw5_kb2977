@@ -60,7 +60,7 @@ plot_1
 
 ```
 
-Overall, the experimental study arm has bigger values than the control arm. As time goes on, the difference between the two study arms increases. At week 1, the observations overlab between the two study arms whereas by week 8, the observations between two arms do not overlap.
+Overall, the experimental study arm had greater observation values than the control arm. As time goes on, the difference between the two study arms increased. At week 1, the observations overlabed between the two study arms whereas by week 8, the observations between two arms did not overlap.
 
 ##Problem 2
 
@@ -143,7 +143,7 @@ Below I've created a plot that shows the estimates and CIs for each city. I've o
 ```{r estimate_plot}
 plot_2 = each_city_nest %>%
   ggplot(aes(x = city_state, y = estimate)) + 
-    geom_point(aes(reorder(city_state, estimate)), color = "BLUE") +
+    geom_point(aes(reorder(city_state, estimate)), size = 0.7, color = "BLUE") +
     geom_errorbar(aes(ymin = lower_CI, ymax = upper_CI), 
                   color = "RED", 
                   width = 0.1, 
