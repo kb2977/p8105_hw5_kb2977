@@ -26,7 +26,7 @@ knitr::opts_chunk$set(
 
 ####Part 1: Creating tidy dataframe
 
-Below I've Created a tidy dataframe containing data from all participants, including the subject ID, arm, and observations over time.
+Below I've created a tidy dataframe containing data from all participants, including the subject ID, arm, and observations over time.
 
 ```{r patient_data_df}
 patient_data_df = 
@@ -49,14 +49,14 @@ Below is a spaghetti plot showing observations on each subject over time.
 
 ```{r plot_data}
 
-plot = patient_data_df %>% 
+plot_1 = patient_data_df %>% 
   ggplot(aes(x = week, y = obs, group = patient_id, color = arm)) +
   geom_line() +
   labs(title = "Observations over Time for Each Subject",
        x = "Time in Weeks",
        y = "Observations") + 
   viridis::scale_color_viridis(name = "Study Arm", discrete = TRUE)
-plot
+plot_1
 
 ```
 
@@ -70,7 +70,7 @@ Overall, the experimental study arm has bigger values than the control arm. As t
 homicide_data = read_csv("https://raw.githubusercontent.com/washingtonpost/data-homicides/master/homicide-data.csv")
 ```
 
-The homicide data consists of the following variables: `r ls(homicide_data)`. There are `r nrow(homicide_data)` observations. 
+The homicide data consists of the following variables: `r ls(homicide_data)`. There are `r nrow(homicide_data)` observations. Some variables are related to victim information and some variables are related to the location of the homicide.
 
 ####Part 2: Creating city_state variable
 
@@ -111,7 +111,7 @@ Below I ran prop.test for each of the cities in the dataset, and extract both th
 prop_unsolved_each_city = function(each_city){
 
   prop_unsolved = homicide_data_summarized %>% 
-    filter(each_city)
+    filter(city_state == each_city)
 
   prop_estimates = prop.test(x = prop_unsolved$unsolved_homicides, 
                             n = prop_unsolved$total_homicides) %>% 
@@ -119,26 +119,39 @@ prop_unsolved_each_city = function(each_city){
   
 tibble(
   estimate = prop_estimates[[1]],
-  upper_ci = prop_estimates[[5]],
-  lower_ci = prop_estimates[[6]]
+  upper_CI = prop_estimates[[5]],
+  lower_CI = prop_estimates[[6]]
 )
 }
 ```
 
-```{r}
-city_nest = nest(homicide_data_summarized, total_homicides:unsolved_homicides)
+```{r nesting_each_city}
+each_city_nest = nest(homicide_data_summarized, total_homicides:unsolved_homicides) 
 
-results = map(city_nest, prop_unsolved_each_city)
-  
+each_city_nest = 
+  each_city_nest %>% 
+  mutate(output = map(each_city_nest$city_state, prop_unsolved_each_city)) %>% 
+  unnest()
+
+each_city_nest
 ```
 
 ####Part 5: Creating a plot of estimates and CIs for each city
 
-Below I've created a plot that shows the estimates and CIs for each city. I've organized cities according to the proportion of unsolved homicides.
+Below I've created a plot that shows the estimates and CIs for each city. I've organized cities according to the proportion of unsolved homicides. Tulsa, AL had the lowest proportion of unsolved homicides and Chicago, IL had the highest proportion of unsolved homicides.
 
-```{r plot}
-plot = 
-  
-geom_errorbar
+```{r estimate_plot}
+plot_2 = each_city_nest %>%
+  ggplot(aes(x = city_state, y = estimate)) + 
+    geom_point(aes(reorder(city_state, estimate)), color = "BLUE") +
+    geom_errorbar(aes(ymin = lower_CI, ymax = upper_CI), 
+                  color = "RED", 
+                  width = 0.1, 
+                  alpha = 0.5) +
+    labs(title = "Proportion of Unsolved Homicide for Each City",
+        x = "City",
+        y = "Proportion of Unsolved Homicides") + 
+    theme(axis.text.x = element_text(angle = 90, hjust = 1, size = 7))
+plot_2
 ```
 
